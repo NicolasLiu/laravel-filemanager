@@ -1,8 +1,8 @@
 <?php
 
-namespace Unisharp\Laravelfilemanager\Events;
+namespace Nicolasliu\Laravelfilemanager\Events;
 
-class ImageWasRenamed
+class FileIsRenaming
 {
     private $old_path;
     private $new_path;

@@ -1,14 +1,14 @@
-<?php namespace Unisharp\Laravelfilemanager\controllers;
+<?php namespace Nicolasliu\Laravelfilemanager\controllers;
 
 use Illuminate\Support\Facades\File;
-use Unisharp\Laravelfilemanager\Events\ImageIsRenaming;
-use Unisharp\Laravelfilemanager\Events\ImageWasRenamed;
-use Unisharp\Laravelfilemanager\Events\FolderIsRenaming;
-use Unisharp\Laravelfilemanager\Events\FolderWasRenamed;
+use Nicolasliu\Laravelfilemanager\Events\FileIsRenaming;
+use Nicolasliu\Laravelfilemanager\Events\FileWasRenamed;
+use Nicolasliu\Laravelfilemanager\Events\FolderIsRenaming;
+use Nicolasliu\Laravelfilemanager\Events\FolderWasRenamed;
 
 /**
  * Class RenameController
- * @package Unisharp\Laravelfilemanager\controllers
+ * @package Nicolasliu\Laravelfilemanager\controllers
  */
 class RenameController extends LfmController
 {
@@ -40,7 +40,7 @@ class RenameController extends LfmController
         if (File::isDirectory($old_file)) {
             event(new FolderIsRenaming($old_file, $new_file));
         } else {
-            event(new ImageIsRenaming($old_file, $new_file));
+            event(new FileIsRenaming($old_file, $new_file));
         }
 
         if (config('lfm.alphanumeric_directory') && preg_match('/[^\w-]/i', $new_name)) {
@@ -61,7 +61,7 @@ class RenameController extends LfmController
 
         File::move($old_file, $new_file);
 
-        event(new ImageWasRenamed($old_file, $new_file));
+        event(new FileWasRenamed($old_file, $new_file));
 
         return $this->success_response;
     }

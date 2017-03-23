@@ -1,8 +1,8 @@
 <?php
 
-namespace Unisharp\Laravelfilemanager\Events;
+namespace Nicolasliu\Laravelfilemanager\Events;
 
-class ImageIsDeleting
+class FileIsUploading
 {
     private $path;
 

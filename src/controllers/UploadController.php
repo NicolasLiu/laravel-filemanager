@@ -1,14 +1,14 @@
-<?php namespace Unisharp\Laravelfilemanager\controllers;
+<?php namespace Nicolasliu\Laravelfilemanager\controllers;
 
 use Illuminate\Support\Facades\File;
 use Intervention\Image\Facades\Image;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Unisharp\Laravelfilemanager\Events\ImageIsUploading;
-use Unisharp\Laravelfilemanager\Events\ImageWasUploaded;
+use Nicolasliu\Laravelfilemanager\Events\FileIsUploading;
+use Nicolasliu\Laravelfilemanager\Events\FileWasUploaded;
 
 /**
  * Class UploadController
- * @package Unisharp\Laravelfilemanager\controllers
+ * @package Nicolasliu\Laravelfilemanager\controllers
  */
 class UploadController extends LfmController
 {
@@ -53,7 +53,7 @@ class UploadController extends LfmController
         $new_filename  = $this->getNewName($file);
         $new_file_path = parent::getCurrentPath($new_filename);
 
-        event(new ImageIsUploading($new_file_path));
+        event(new FileIsUploading($new_file_path));
         try {
             if ($this->fileIsImage($file)) {
                 Image::make($file->getRealPath())
@@ -67,7 +67,7 @@ class UploadController extends LfmController
         } catch (\Exception $e) {
             return $this->error('invalid');
         }
-        event(new ImageWasUploaded(realpath($new_file_path)));
+        event(new FileWasUploaded(realpath($new_file_path)));
 
         return $new_filename;
     }
