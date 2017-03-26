@@ -1,7 +1,7 @@
 <div class="row">
   <div class="col-md-8">
     <div class="crop-container">
-      <img src="{{ asset($img) }}" class="img img-responsive">
+      <img src="{{ $img_url }}" class="img img-responsive">
     </div>
   </div>
   <div class="col-md-4">
@@ -32,8 +32,8 @@
 
       <button class="btn btn-primary" onclick="performCrop()">{{ trans('laravel-filemanager::lfm.btn-crop') }}</button>
       <button class="btn btn-info" onclick="loadItems()">{{ trans('laravel-filemanager::lfm.btn-cancel') }}</button>
-      <form action="{{ route('unisharp.lfm.getCrop') }}" role='form' name='cropForm' id='cropForm' mathod='post'>
-        <input type="hidden" id="img" name="img" value="{{ $img }}">
+      <form action="{{ route('nicolasliu.lfm.getCrop') }}" role='form' name='cropForm' id='cropForm' mathod='post'>
+        <input type="hidden" id="img" name="img" value="{{ $img_id }}">
         <input type="hidden" id="working_dir" name="working_dir" value="{{ $working_dir }}">
         <input type="hidden" id="dataX" name="dataX">
         <input type="hidden" id="dataY" name="dataY">
@@ -83,9 +83,9 @@
         $.ajax({
             type: "GET",
             dataType: "text",
-            url: "{{ route('unisharp.lfm.getCropimage') }}",
+            url: "{{ route('nicolasliu.lfm.getCropimage') }}",
             data: {
-                img: '{{ parse_url($img, PHP_URL_PATH) }}',
+                img: '{{ $img_id }}',
                 working_dir: $("#working_dir").val(),
                 dataX: $("#dataX").val(),
                 dataY: $("#dataY").val(),

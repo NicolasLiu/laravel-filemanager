@@ -166,43 +166,41 @@ function createFolder(folder_name) {
     .done(refreshFoldersAndItems);
 }
 
-function rename(item_name) {
+function rename(item_id, item_name) {
   bootbox.prompt({
     title: lang['message-rename'],
     value: item_name,
     callback: function (result) {
       if (result == null) return;
       performLfmRequest('rename', {
-        file: item_name,
+        file: item_id,
         new_name: result
       }).done(refreshFoldersAndItems);
     }
   });
 }
 
-function trash(item_name) {
+function trash(item_id) {
   bootbox.confirm(lang['message-delete'], function (result) {
     if (result == true) {
-      performLfmRequest('delete', {items: item_name})
+      performLfmRequest('delete', {items: item_id})
         .done(refreshFoldersAndItems);
     }
   });
 }
 
-function cropImage(image_name) {
-  performLfmRequest('crop', {img: image_name})
+function cropImage(image_id) {
+  performLfmRequest('crop', {img: image_id})
     .done(hideNavAndShowEditor);
 }
 
-function resizeImage(image_name) {
-  performLfmRequest('resize', {img: image_name})
+function resizeImage(image_id) {
+  performLfmRequest('resize', {img: image_id})
     .done(hideNavAndShowEditor);
 }
 
-function download(file_name) {
-  var data = defaultParameters();
-  data['file'] = file_name;
-  location.href = lfm_route + '/download?' + $.param(data);
+function download(file_id) {
+  location.href = lfm_route + '/download/' + file_id;
 }
 
 // ==================================
@@ -294,8 +292,7 @@ function useFile(file) {
 
 function defaultParameters() {
   return {
-    working_dir: $('#working_dir').val(),
-    type: $('#type').val()
+    working_dir: $('#working_dir').val()
   };
 }
 
@@ -311,13 +308,12 @@ function getFileUrl(file) {
   return $("[id=\"" + file + "\"]").data('url');
 }
 
-function fileView(file, timestamp) {
-  var rnd = makeRandom();
+function fileView(file_id) {
   bootbox.dialog({
     title: lang['title-view'],
     message: $('<img>')
       .addClass('img img-responsive center-block')
-      .attr('src', getFileUrl(file) + '?timestamp=' + timestamp),
+      .attr('src', getFileUrl(file_id)),
     size: 'large',
     onEscape: true,
     backdrop: true

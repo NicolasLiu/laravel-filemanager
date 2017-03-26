@@ -1,4 +1,6 @@
-<?php namespace Nicolasliu\Laravelfilemanager\controllers;
+<?php
+namespace Nicolasliu\Laravelfilemanager\controllers;
+use Nicolasliu\Laravelfilemanager\FileRecord;
 
 /**
  * Class DownloadController
@@ -11,8 +13,10 @@ class DownloadController extends LfmController
      *
      * @return mixed
      */
-    public function getDownload()
+    public function getDownload($id)
     {
-        return response()->download(parent::getCurrentPath(request('file')));
+        $file = FileRecord::find($id);
+        return response()->download($file->realpath.DIRECTORY_SEPARATOR.$file->realname,
+            $file->filename);
     }
 }

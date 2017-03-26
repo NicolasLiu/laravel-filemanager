@@ -4,6 +4,7 @@ namespace Nicolasliu\Laravelfilemanager\traits;
 
 use Illuminate\Support\Facades\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Nicolasliu\Laravelfilemanager\FileRecord;
 
 trait LfmHelpers
 {
@@ -20,29 +21,46 @@ trait LfmHelpers
 
     public function getCurrentPath($file_name = null, $is_thumb = null)
     {
-        $path = $this->composeSegments('dir', $is_thumb, $file_name);
+        $path = $this->composeSegments($is_thumb, $file_name);
 
         $path = $this->translateToOsPath($path);
 
         return base_path($path);
     }
 
-    public function getThumbUrl($image_name = null)
+    public function getCurrentPathWithoutName($is_thumb = null)
     {
-        return $this->getFileUrl($image_name, 'thumb');
+        $path = $this->composeSegmentsWithoutName($is_thumb);
+
+        $path = $this->translateToOsPath($path);
+
+        return base_path($path);
     }
 
-    public function getFileUrl($image_name = null, $is_thumb = null)
+    public function getThumbUrl($image_id = null)
     {
-        return url($this->composeSegments('url', $is_thumb, $image_name));
+        return $this->getFileUrl($image_id, 'thumb');
     }
 
-    private function composeSegments($type, $is_thumb, $file_name)
+    public function getFileUrl($id, $is_thumb = null)
+    {
+        if (empty($is_thumb)) {
+            return url(config('lfm.prefix') . '/download/' . $id);
+        } else {
+            return url(config('lfm.prefix') . '/thumb/' . $id);
+        }
+
+    }
+    public function getPreviewUrl($id)
+    {
+        return url(config('lfm.prefix') . '/preview/' . $id);
+    }
+
+    private function composeSegments($is_thumb, $file_name)
     {
         $full_path = implode($this->ds, [
-            $this->getPathPrefix($type),
+            $this->getPathPrefix($is_thumb),
             $this->getFormatedWorkingDir(),
-            $this->appendThumbFolderPath($is_thumb),
             $file_name
         ]);
 
@@ -52,20 +70,36 @@ trait LfmHelpers
         return $this->removeLastSlash($full_path);
     }
 
-    public function getPathPrefix($type)
+    private function composeSegmentsWithoutName($is_thumb)
     {
-        $default_folder_name = 'files';
-        if ($this->isProcessingImages()) {
-            $default_folder_name = 'photos';
-        }
+        $full_path = implode($this->ds, [
+            $this->getPathPrefix($is_thumb),
+            $this->getFormatedWorkingDir()
+        ]);
 
-        $prefix = config('lfm.' . $this->currentLfmType() . 's_folder_name', $default_folder_name);
+        $full_path = $this->removeDuplicateSlash($full_path);
+        $full_path = $this->translateToLfmPath($full_path);
 
-        if ($type === 'dir') {
-            $prefix = config('lfm.base_directory', 'public') . '/' . $prefix;
+        return $this->removeLastSlash($full_path);
+    }
+
+    public function getPathPrefix($is_thumb = null)
+    {
+
+        $p = config('lfm.base_directory', 'storage');
+
+        if ($is_thumb === 'thumb') {
+            $prefix = $p . DIRECTORY_SEPARATOR . config('lfm.thumb_folder_name', 'thumbs');
+        } else {
+            $prefix = $p . DIRECTORY_SEPARATOR . config('lfm.files_folder_name', 'files');
         }
 
         return $prefix;
+    }
+
+    private function canReadWorkingDir($dir)
+    {
+
     }
 
     private function getFormatedWorkingDir()
@@ -93,7 +127,7 @@ trait LfmHelpers
         $thumb_folder_name = config('lfm.thumb_folder_name');
         //if user is inside thumbs folder there is no need
         // to add thumbs substring to the end of $url
-        $in_thumb_folder = preg_match('/'.$thumb_folder_name.'$/i', $this->getFormatedWorkingDir());
+        $in_thumb_folder = preg_match('/' . $thumb_folder_name . '$/i', $this->getFormatedWorkingDir());
 
         if (!$in_thumb_folder) {
             return $thumb_folder_name . $this->ds;
@@ -129,9 +163,8 @@ trait LfmHelpers
     public function getInternalPath($full_path)
     {
         $full_path = $this->translateToLfmPath($full_path);
-        $full_path = $this->translateToUtf8($full_path);
-        $lfm_dir_start = strpos($full_path, $this->getPathPrefix('dir'));
-        $working_dir_start = $lfm_dir_start + strlen($this->getPathPrefix('dir'));
+        $lfm_dir_start = strpos($full_path, $this->getPathPrefix());
+        $working_dir_start = $lfm_dir_start + strlen($this->getPathPrefix());
         $lfm_file_path = $this->ds . substr($full_path, $working_dir_start);
 
         return $this->removeDuplicateSlash($lfm_file_path);
@@ -180,7 +213,7 @@ trait LfmHelpers
     public function translateFromUtf8($input)
     {
         if ($this->isRunningOnWindows()) {
-            $input = iconv('UTF-8', 'BIG5', $input);
+            $input = iconv('UTF-8', 'GB2312', $input);
         }
 
         return $input;
@@ -189,7 +222,7 @@ trait LfmHelpers
     public function translateToUtf8($input)
     {
         if ($this->isRunningOnWindows()) {
-            $input = iconv('BIG5', 'UTF-8', $input);
+            $input = iconv('GB2312', 'UTF-8', $input);
         }
 
         return $input;
@@ -238,20 +271,18 @@ trait LfmHelpers
 
     public function getDirectories($path)
     {
-        $thumb_folder_name = config('lfm.thumb_folder_name');
-        $all_directories = File::directories($path);
-
         $arr_dir = [];
+        $dirs = FileRecord::where('realpath', $path)->where('directory', true)->get();
 
-        foreach ($all_directories as $directory) {
-            $directory_name = $this->getName($directory);
+        foreach ($dirs as $directory) {
+            $directory_name = $directory->filename;
 
-            if ($directory_name !== $thumb_folder_name) {
-                $arr_dir[] = (object)[
-                    'name' => $directory_name,
-                    'path' => $this->getInternalPath($directory)
-                ];
-            }
+            $arr_dir[] = (object)[
+                'id'   => $directory->id,
+                'name' => $directory_name,
+                'path' => $this->getInternalPath($directory->realpath . DIRECTORY_SEPARATOR . $directory_name)
+            ];
+
         }
 
         return $arr_dir;
@@ -260,35 +291,33 @@ trait LfmHelpers
     public function getFilesWithInfo($path)
     {
         $arr_files = [];
-
-        foreach (File::files($path) as $key => $file) {
-            $file_name = $this->getName($file);
-
+        $files = FileRecord::where('realpath', $path)->where('directory', false)->get();
+        foreach ($files as $key => $file) {
+            $file_name = $file->filename;
+            $file_id = $file->id;
             if ($this->fileIsImage($file)) {
-                $file_type = File::mimeType($file);
+                $file_type = $file->mimetype;
                 $icon = 'fa-image';
+                $thumb = $this->getFileUrl($file_id, 'thumb');
+                $preview = $this->getPreviewUrl($file_id);
             } else {
                 $extension = strtolower(File::extension($file_name));
                 $file_type = config('lfm.file_type_array.' . $extension) ?: 'File';
                 $icon = config('lfm.file_icon_array.' . $extension) ?: 'fa-file';
+                $thumb = null;
+                $preview = null;
             }
-
-            $thumb_path = $this->getThumbPath($file_name);
-            if (File::exists($thumb_path)) {
-                $thumb_url = $this->getThumbUrl($file_name) . '?timestamp=' . filemtime($thumb_path);
-            } else {
-                $thumb_url = null;
-            }
-
 
             $arr_files[$key] = [
-                'name'      => $file_name,
-                'url'       => $this->getFileUrl($file_name),
-                'size'      => $this->humanFilesize(File::size($file)),
-                'updated'   => filemtime($file),
-                'type'      => $file_type,
-                'icon'      => $icon,
-                'thumb'     => $thumb_url
+                'id' => $file_id,
+                'name' => $file_name,
+                'url' => $this->getFileUrl($file_id),
+                'size' => $file->filesize,
+                'updated' => $file->updated_at,
+                'type' => $file_type,
+                'icon' => $icon,
+                'thumb' => $thumb,
+                'preview' => $preview
             ];
         }
 
@@ -311,6 +340,8 @@ trait LfmHelpers
     {
         if ($file instanceof UploadedFile) {
             $mime_type = $file->getMimeType();
+        } else if ($file instanceof FileRecord) {
+            $mime_type = $file->mimetype;
         } else {
             $mime_type = File::mimeType($file);
         }
@@ -337,7 +368,7 @@ trait LfmHelpers
 
     public function humanFilesize($bytes, $decimals = 2)
     {
-        $size = array('B','kB','MB','GB','TB','PB','EB','ZB','YB');
+        $size = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
         $factor = floor((strlen($bytes) - 1) / 3);
         return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . ' ' . @$size[$factor];
     }

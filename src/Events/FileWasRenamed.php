@@ -4,25 +4,13 @@ namespace Nicolasliu\Laravelfilemanager\Events;
 
 class FileWasRenamed
 {
-    private $old_path;
-    private $new_path;
+    private $file_id;
+    private $new_name;
 
-    public function __construct($old_path, $new_path)
+    public function __construct($file_id, $new_name)
     {
-        $this->old_path = $old_path;
-        $this->new_path = $new_path;
+        $this->$file_id = $file_id;
+        $this->$new_name = $new_name;
     }
 
-    /**
-     * @return string
-     */
-    public function oldPath()
-    {
-        return $this->old_path;
-    }
-
-    public function newPath()
-    {
-        return $this->new_path;
-    }
 }

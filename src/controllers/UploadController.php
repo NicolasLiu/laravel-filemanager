@@ -5,6 +5,7 @@ use Intervention\Image\Facades\Image;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Nicolasliu\Laravelfilemanager\Events\FileIsUploading;
 use Nicolasliu\Laravelfilemanager\Events\FileWasUploaded;
+use Nicolasliu\Laravelfilemanager\FileRecord;
 
 /**
  * Class UploadController
@@ -21,6 +22,7 @@ class UploadController extends LfmController
     public function upload()
     {
         $files = request()->file('upload');
+
         $error_bag = [];
         foreach (is_array($files) ? $files : [$files] as $file) {
             $validation_message = $this->uploadValidator($file);
@@ -51,10 +53,23 @@ class UploadController extends LfmController
         }
 
         $new_filename  = $this->getNewName($file);
-        $new_file_path = parent::getCurrentPath($new_filename);
+        $new_file_path = parent::getCurrentPathWithoutName();
 
-        event(new FileIsUploading($new_file_path));
         try {
+            $filerecord = new FileRecord();
+            $filerecord->owner = 'private';
+            $filerecord->owner_id = parent::getUserSlug();
+            $filerecord->uploader_id = $filerecord->owner_id;
+            $filerecord->filename = $file->getClientOriginalName();
+            $filerecord->realname = $new_filename;
+            $filerecord->realpath = $new_file_path;
+            $filerecord->filesize = $file->getClientSize();
+            $filerecord->mimetype = $file->getClientMimeType();
+            $filerecord->directory = false;
+            $filerecord->save();
+
+            $new_file_path = parent::getCurrentPath($new_filename);
+
             if ($this->fileIsImage($file)) {
                 Image::make($file->getRealPath())
                     ->orientate() //Apply orientation from exif data
@@ -64,6 +79,7 @@ class UploadController extends LfmController
             } else {
                 File::move($file->path(), $new_file_path);
             }
+
         } catch (\Exception $e) {
             return $this->error('invalid');
         }

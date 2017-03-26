@@ -1,11 +1,11 @@
 <?php
 $middleware = array_merge(\Config::get('lfm.middlewares'), [
-    '\Unisharp\Laravelfilemanager\middlewares\MultiUser',
-    '\Unisharp\Laravelfilemanager\middlewares\CreateDefaultFolder'
+    '\Nicolasliu\Laravelfilemanager\middlewares\MultiUser',
+    '\Nicolasliu\Laravelfilemanager\middlewares\CreateDefaultFolder'
 ]);
 $prefix = \Config::get('lfm.prefix', 'laravel-filemanager');
-$as = 'unisharp.lfm.';
-$namespace = '\Unisharp\Laravelfilemanager\controllers';
+$as = 'nicolasliu.lfm.';
+$namespace = '\Nicolasliu\Laravelfilemanager\controllers';
 
 // make sure authenticated
 Route::group(compact('middleware', 'prefix', 'as', 'namespace'), function () {
@@ -14,6 +14,16 @@ Route::group(compact('middleware', 'prefix', 'as', 'namespace'), function () {
     Route::get('/', [
         'uses' => 'LfmController@show',
         'as' => 'show'
+    ]);
+
+    Route::get('/preview/{id}', [
+        'uses' => 'ImageController@preview',
+        'as' => 'preview'
+    ]);
+
+    Route::get('/thumb/{id}', [
+        'uses' => 'ImageController@thumb',
+        'as' => 'thumb'
     ]);
 
     // Show integration error messages
@@ -75,7 +85,7 @@ Route::group(compact('middleware', 'prefix', 'as', 'namespace'), function () {
     ]);
 
     // download
-    Route::get('/download', [
+    Route::get('/download/{id}', [
         'uses' => 'DownloadController@getDownload',
         'as' => 'getDownload'
     ]);

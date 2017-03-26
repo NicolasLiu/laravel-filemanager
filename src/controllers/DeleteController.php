@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\File;
 use Nicolasliu\Laravelfilemanager\Events\FileIsDeleting;
 use Nicolasliu\Laravelfilemanager\Events\FileWasDeleted;
+use Nicolasliu\Laravelfilemanager\FileRecord;
 
 /**
  * Class CropController
@@ -17,39 +18,29 @@ class DeleteController extends LfmController
      */
     public function getDelete()
     {
-        $name_to_delete = request('items');
-
-        $file_to_delete = parent::getCurrentPath($name_to_delete);
-        $thumb_to_delete = parent::getThumbPath($name_to_delete);
-
-        event(new FileIsDeleting($file_to_delete));
-
-        if (is_null($name_to_delete)) {
-            return $this->error('folder-name');
+        $delete_id = request('items');
+        $fileRecord = FileRecord::find($delete_id);
+        if ($fileRecord->directory == true) {
+            $this->deleteDir($fileRecord);
+        } else {
+            $fileRecord->delete();
         }
 
-        if (!File::exists($file_to_delete)) {
-            return $this->error('folder-not-found', ['folder' => $file_to_delete]);
-        }
-
-        if (File::isDirectory($file_to_delete)) {
-            if (!parent::directoryIsEmpty($file_to_delete)) {
-                return $this->error('delete-folder');
-            }
-
-            File::deleteDirectory($file_to_delete);
-
-            return $this->success_response;
-        }
-
-        if ($this->fileIsImage($file_to_delete)) {
-            File::delete($thumb_to_delete);
-        }
-
-        File::delete($file_to_delete);
-
-        event(new FileWasDeleted($file_to_delete));
-
+        event(new FileWasDeleted($fileRecord->realpath . DIRECTORY_SEPARATOR . $fileRecord->filename));
         return $this->success_response;
+    }
+
+    private function deleteDir($dir)
+    {
+        $path = $dir->realpath . DIRECTORY_SEPARATOR . $dir->realname;
+        $files = FileRecord::where('realpath', $path)->get();
+        foreach ($files as $file) {
+            if ($file->directory == true) {
+                $this->deleteDir($file);
+            } else {
+                $file->delete();
+            }
+        }
+        $dir->delete();
     }
 }

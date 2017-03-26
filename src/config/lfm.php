@@ -15,7 +15,7 @@ return [
     'middlewares' => ['web','auth'],
 
     // The url to this package. Change it if necessary.
-    'prefix' => 'laravel-filemanager',
+    'prefix' => 'lfm',
 
     /*
     |--------------------------------------------------------------------------
@@ -40,11 +40,9 @@ return [
 
     // Which folder to store files in project, fill in 'public', 'resources', 'storage' and so on.
     // You should create routes to serve images if it is not set to public.
-    'base_directory' => 'public',
+    'base_directory' => 'storage',
 
-    'images_folder_name' => 'photos',
     'files_folder_name'  => 'files',
-
     'shared_folder_name' => 'shares',
     'thumb_folder_name'  => 'thumbs',
 
@@ -66,13 +64,13 @@ return [
     */
 
     // If true, the uploaded file will be renamed to uniqid() + file extension.
-    'rename_file' => false,
+    'rename_file' => true,
 
     // If rename_file set to false and this set to true, then non-alphanumeric characters in filename will be replaced.
     'alphanumeric_filename' => true,
 
     // If true, non-alphanumeric folder name will be rejected.
-    'alphanumeric_directory' => false,
+    'alphanumeric_directory' => true,
 
     // If true, the uploading file's size will be verified for over than max_image_size/max_file_size.
     'should_validate_size' => false,

@@ -4,6 +4,7 @@ use Nicolasliu\Laravelfilemanager\controllers\Controller;
 use Intervention\Image\Facades\Image;
 use Nicolasliu\Laravelfilemanager\Events\ImageIsCropping;
 use Nicolasliu\Laravelfilemanager\Events\ImageWasCropped;
+use Nicolasliu\Laravelfilemanager\FileRecord;
 
 /**
  * Class CropController
@@ -19,10 +20,11 @@ class CropController extends LfmController
     public function getCrop()
     {
         $working_dir = request('working_dir');
-        $img = parent::getFileUrl(request('img'));
+        $img_id = request('img');
+        $img_url = parent::getFileUrl(request('img'));
 
         return view('laravel-filemanager::crop')
-            ->with(compact('working_dir', 'img'));
+            ->with(compact('working_dir', 'img_id', 'img_url'));
     }
 
 
@@ -31,13 +33,13 @@ class CropController extends LfmController
      */
     public function getCropimage()
     {
-        $image      = request('img');
+        $img_id      = request('img');
         $dataX      = request('dataX');
         $dataY      = request('dataY');
         $dataHeight = request('dataHeight');
         $dataWidth  = request('dataWidth');
-        $image_path = public_path() . $image;
-
+        $image = FileRecord::find($img_id);
+        $image_path = $image->realpath . DIRECTORY_SEPARATOR . $image->realname;
         // crop image
         Image::make($image_path)
             ->crop($dataWidth, $dataHeight, $dataX, $dataY)

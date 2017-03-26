@@ -1,6 +1,6 @@
 <div class="row">
   <div class="col-md-8" id="containment">
-    <img id="resize" src="{{ asset($img) }}" height="{{ $height }}" width="{{ $width }}">
+    <img id="resize" src="{{ $img_url }}" height="{{ $height }}" width="{{ $width }}">
   </div>
   <div class="col-md-4">
 
@@ -73,9 +73,9 @@
     $.ajax({
       type: "GET",
       dataType: "text",
-      url: "{{ route('unisharp.lfm.performResize') }}",
+      url: "{{ route('nicolasliu.lfm.performResize') }}",
       data: {
-        img: '{{ parse_url($img, PHP_URL_PATH) }}',
+        img: '{{ $img_id }}',
         working_dir: $("#working_dir").val(),
         dataX: $("#dataX").val(),
         dataY: $("#dataY").val(),
